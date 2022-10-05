@@ -139,11 +139,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="FMG.h" />
     <ClInclude Include="winio.h" />
     <ClInclude Include="winio_nt.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="FMG.cpp" />
+    <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CopyFileToFolders Include="FanView.cfg">

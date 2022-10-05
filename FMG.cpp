@@ -36,6 +36,7 @@
 
 using namespace std;
 #include "winio.h"
+#include "FMG.h"
 //#pragma comment(lib,"WinIo.lib")       // For 32bit
 #pragma comment(lib,"WinIox64.lib")    // For 64bit
 
@@ -1623,102 +1624,47 @@ void display(void)
         }
     }
 }
-
-int main(int argc, char* argv[])
+bool FMGInit()
 {
     char IOInitOK = 0;
-    int i;
-
     IOInitOK = InitializeWinIo();
-    if (IOInitOK)
-    {
+    if (IOInitOK) {
         SetTextColor(EFI_LIGHTGREEN, EFI_BLACK);
         printf("WinIo OK\n");
-    }
-    else
-    {
+    } else {
         SetTextColor(EFI_LIGHTRED, EFI_BLACK);
         printf("Error during initialization of WinIo\n");
-        goto IOError;
+        return false;
     }
-
     SetTextColor(EFI_WHITE, EFI_BLACK);
     system("cls");
 
     // Read battery.cfg file to init battery info address
     ReadCfgFile();
     ReadSettingFile();
-    if (NULL == CfgFile)
-    {
-        goto end;
+    if (NULL == CfgFile) {
+        return false;
     }
 
     ToolInit();
     PollFanInfo();
-
-    //---------------------------------------Creat log file---------------------------------------------
-    /*if (BAT_LogFile)
-    {
-        time_t t = time(0);
-        char tmp[64];
-        strftime(tmp, sizeof(tmp), "%Y-%m-%d[%X]", localtime(&t));
-        tmp[13] = '.';
-        tmp[16] = '.';
-        strcat(tmp, "log.txt");
-        BAT_LogFile = fopen(tmp, "w");
-
-        fprintf(BAT_LogFile, "Fan Tool %s (For ITE %X%X)\n", TOOLS_VER, ITE_EC_Ver_1, ITE_EC_Ver_2);
-        fprintf(BAT_LogFile, "EC current version is : %s\n", BAT1_Info[EC_Version].InfoValue);
-        fprintf(BAT_LogFile, "Set the data polling time  is %d(s)\n", SetTime / 100);
-
-        fprintf(BAT_LogFile, "%-22s", "Date&Time");
-
-        for (i = 0; i < INFONAMECOUNT; i++)
-        {
-            if (BAT1_Info[i].ActiveLog)
-            {
-                fprintf(BAT_LogFile, "%-20.18s", BAT1_Info[i].CfgItemName);
-            }
-        }
-        fprintf(BAT_LogFile, "\n");
-        fflush(BAT_LogFile);
-    }*/
-    //--------------------------------------------------------------------------------------------------
-
-    while (ESC != Key_Value)
-    {
-        PollFanInfo();
-
-        /*if (BAT_LogFile)
-        {
-            PrintLogFile();
-        }*/
-
-
-        PrintFanInfo();
-
-        display();
-    }
-
-    //--------------------------------------------
-    // Clear Fan test falg
+    return true;
+}
+void FMGEnd()
+{
     EC_RAM_WRITE(BAT1_Info[FAN1_Set_RPM].InfoAddr_L, 0);
     EC_RAM_WRITE(BAT1_Info[FAN2_Set_RPM].InfoAddr_L, 0);
-    //EC_RAM_WRITE(0xB20,0);
-    //--------------------------------------------
-
-
-    /*if (BAT_LogFile)
-    {
-        fclose(BAT_LogFile);
-    }*/
-    goto end;
-
-IOError:
     ShutdownWinIo();
-    return 1;
+}
+bool CheckContinue()
+{
+    return ESC != Key_Value;
+}
+void LoopFunc()
+{
+    PollFanInfo();
 
-end:
-    ShutdownWinIo();
-    return 0;
+    PrintFanInfo();
+
+    display();
 }
